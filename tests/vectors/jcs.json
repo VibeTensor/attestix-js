@@ -1,0 +1,76 @@
+[
+  {
+    "input": {
+      "b": 1,
+      "a": 2,
+      "A": 3,
+      "Z": 4,
+      "z": 5
+    },
+    "canonical_hex": "7b2241223a332c225a223a342c2261223a322c2262223a312c227a223a357d",
+    "canonical_utf8": "{\"A\":3,\"Z\":4,\"a\":2,\"b\":1,\"z\":5}"
+  },
+  {
+    "input": {
+      "unicode": "café",
+      "emoji": "rocket",
+      "cjk": "日本語",
+      "nfc": "é"
+    },
+    "canonical_hex": "7b22636a6b223a22e697a5e69cace8aa9e222c22656d6f6a69223a22726f636b6574222c226e6663223a22c3a9222c22756e69636f6465223a22636166c3a9227d",
+    "canonical_utf8": "{\"cjk\":\"日本語\",\"emoji\":\"rocket\",\"nfc\":\"é\",\"unicode\":\"café\"}"
+  },
+  {
+    "input": {
+      "nested": {
+        "z": [
+          3,
+          2,
+          1
+        ],
+        "a": {
+          "inner": true
+        }
+      },
+      "n": null
+    },
+    "canonical_hex": "7b226e223a6e756c6c2c226e6573746564223a7b2261223a7b22696e6e6572223a747275657d2c227a223a5b332c322c315d7d7d",
+    "canonical_utf8": "{\"n\":null,\"nested\":{\"a\":{\"inner\":true},\"z\":[3,2,1]}}"
+  },
+  {
+    "input": {
+      "numbers": [
+        1,
+        1.0,
+        1.5,
+        0,
+        100000000000
+      ],
+      "flag": false
+    },
+    "canonical_hex": "7b22666c6167223a66616c73652c226e756d62657273223a5b312c312c312e352c302c3130303030303030303030305d7d",
+    "canonical_utf8": "{\"flag\":false,\"numbers\":[1,1,1.5,0,100000000000]}"
+  },
+  {
+    "input": {
+      "escapes": "tab\there\nnewline\"quote\\backslash\r",
+      "ctrl": "\u0001\u001f"
+    },
+    "canonical_hex": "7b226374726c223a225c75303030315c7530303166222c2265736361706573223a227461625c74686572655c6e6e65776c696e655c2271756f74655c5c6261636b736c6173685c72227d",
+    "canonical_utf8": "{\"ctrl\":\"\\u0001\\u001f\",\"escapes\":\"tab\\there\\nnewline\\\"quote\\\\backslash\\r\"}"
+  },
+  {
+    "input": {
+      "@context": [
+        "https://www.w3.org/2018/credentials/v1",
+        "https://w3id.org/security/suites/ed25519-2020/v1"
+      ],
+      "type": [
+        "VerifiableCredential",
+        "X"
+      ]
+    },
+    "canonical_hex": "7b2240636f6e74657874223a5b2268747470733a2f2f7777772e77332e6f72672f323031382f63726564656e7469616c732f7631222c2268747470733a2f2f773369642e6f72672f73656375726974792f7375697465732f656432353531392d323032302f7631225d2c2274797065223a5b2256657269666961626c6543726564656e7469616c222c2258225d7d",
+    "canonical_utf8": "{\"@context\":[\"https://www.w3.org/2018/credentials/v1\",\"https://w3id.org/security/suites/ed25519-2020/v1\"],\"type\":[\"VerifiableCredential\",\"X\"]}"
+  }
+]

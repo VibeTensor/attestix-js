@@ -1,0 +1,7 @@
+{
+  "server_did": "did:key:z6Mksix5bKvgLJXmtvteVn6vG98QE9pZHrZLqEmLviEqA9ae",
+  "server_public_key_hex": "c52ce8ca7ddba9af00b3e2293ad4315985586f2ecd2ca151bcf2ebad9d6d0407",
+  "root_did": "did:key:z6MksZymKGnXswasb2CZtsP1iekEnMZduYRAB3xmTh8AjHEb",
+  "coordinator_did": "did:key:z6MkfPDKRs7xGyNTpbYRL1wtnJ5zCnmMtqsrfYN58kXgyaEh",
+  "researcher_did": "did:key:z6MkescFR36oH8jz85Z9ohKHv8HUaqkeAD5kP741kwYPfun5"
+}

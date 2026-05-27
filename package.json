@@ -1,7 +1,7 @@
 {
 	"name": "@vibetensor/attestix",
-	"version": "0.1.0",
-	"description": "TypeScript SDK for Attestix - Attestation Infrastructure for AI Agents",
+	"version": "0.2.0",
+	"description": "TypeScript SDK for Attestix - Attestation Infrastructure for AI Agents. REST client plus offline cross-engine verification of Ed25519 W3C VCs and UCAN delegation chains.",
 	"type": "module",
 	"main": "dist/index.js",
 	"module": "dist/index.js",
@@ -21,6 +21,7 @@
 	"files": [
 		"dist",
 		"README.md",
+		"SPEC.md",
 		"LICENSE"
 	],
 	"scripts": {
@@ -50,9 +51,17 @@
 		"compliance",
 		"reputation",
 		"provenance",
+		"ed25519",
+		"jcs",
+		"did-key",
+		"ucan",
+		"offline-verification",
 		"vibetensor"
 	],
 	"engines": {
 		"node": ">=18.0.0"
+	},
+	"dependencies": {
+		"@noble/curves": "2.2.0"
 	}
 }
