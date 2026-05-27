@@ -1,0 +1,58 @@
+{
+	"name": "@vibetensor/attestix",
+	"version": "0.1.0",
+	"description": "TypeScript SDK for Attestix - Attestation Infrastructure for AI Agents",
+	"type": "module",
+	"main": "dist/index.js",
+	"module": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.cts",
+				"default": "./dist/index.cjs"
+			}
+		}
+	},
+	"files": [
+		"dist",
+		"README.md",
+		"LICENSE"
+	],
+	"scripts": {
+		"build": "tsup",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"lint": "tsc --noEmit",
+		"prepublishOnly": "npm run build"
+	},
+	"devDependencies": {
+		"tsup": "^8.4.0",
+		"typescript": "^5.7.3",
+		"vitest": "^3.1.1"
+	},
+	"license": "Apache-2.0",
+	"author": "VibeTensor Inc.",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/VibeTensor/attestix-js"
+	},
+	"keywords": [
+		"attestix",
+		"attestation",
+		"ai-agents",
+		"verifiable-credentials",
+		"did",
+		"compliance",
+		"reputation",
+		"provenance",
+		"vibetensor"
+	],
+	"engines": {
+		"node": ">=18.0.0"
+	}
+}
