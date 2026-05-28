@@ -1,7 +1,7 @@
 # Attestix Cross-Engine Verification Spec
 
 This document specifies the exact wire formats and canonicalization rules the
-`@vibetensor/attestix` offline verifier must reproduce to verify artifacts
+`attestix` offline verifier must reproduce to verify artifacts
 produced by the Python Attestix engine (`VibeTensor/attestix`). It is the
 authority for closing GitHub issue [VibeTensor/attestix#7](https://github.com/VibeTensor/attestix/issues/7)
 (cross-engine interop). Everything here was derived by reading the Python

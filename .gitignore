@@ -4,5 +4,7 @@ dist/
 .DS_Store
 .env
 .env.*
+.npmrc
 coverage/
 *.tgz
+*.log

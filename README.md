@@ -1,4 +1,4 @@
-# @vibetensor/attestix
+# attestix
 
 TypeScript SDK for [Attestix](https://github.com/VibeTensor/attestix) - Attestation Infrastructure for AI Agents.
 
@@ -7,13 +7,13 @@ Provides typed client methods for identity management, verifiable credentials, c
 ## Installation
 
 ```bash
-npm install @vibetensor/attestix
+npm install attestix
 ```
 
 ## Quick Start
 
 ```typescript
-import { AttestixClient } from '@vibetensor/attestix';
+import { AttestixClient } from 'attestix';
 
 const client = new AttestixClient({
   baseUrl: 'https://api.attestix.io',
@@ -59,7 +59,7 @@ network access.
 ### Verify a credential
 
 ```typescript
-import { verifyCredential } from '@vibetensor/attestix';
+import { verifyCredential } from 'attestix';
 
 // `vc` is the raw VC JSON (e.g. from issueCredential, a file, or a QR payload)
 const result = verifyCredential(vc);
@@ -85,7 +85,7 @@ document offline.
 ### Verify a delegation chain
 
 ```typescript
-import { verifyDelegationChain } from '@vibetensor/attestix';
+import { verifyDelegationChain } from 'attestix';
 
 // Pass the leaf JWT (its `prf` parent chain is walked automatically),
 // or an explicit array of tokens ordered leaf..root.
@@ -114,7 +114,7 @@ import {
   publicKeyToDidKey,   // 32-byte Ed25519 public key -> did:key:z...
   verifyEd25519,       // (signature, message, publicKey) -> boolean
   verifyPresentation,  // verify a Verifiable Presentation + its embedded VCs
-} from '@vibetensor/attestix';
+} from 'attestix';
 ```
 
 ## API Reference
@@ -221,7 +221,7 @@ import {
   AttestixNotFoundError,
   AttestixValidationError,
   AttestixRateLimitError,
-} from '@vibetensor/attestix';
+} from 'attestix';
 
 try {
   await client.getIdentity('nonexistent');

@@ -1,5 +1,5 @@
 {
-	"name": "@vibetensor/attestix",
+	"name": "attestix",
 	"version": "0.2.0",
 	"description": "TypeScript SDK for Attestix - Attestation Infrastructure for AI Agents. REST client plus offline cross-engine verification of Ed25519 W3C VCs and UCAN delegation chains.",
 	"type": "module",
