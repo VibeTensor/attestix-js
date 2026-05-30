@@ -1,6 +1,14 @@
 # attestix
 
-TypeScript SDK for [Attestix](https://github.com/VibeTensor/attestix) - Attestation Infrastructure for AI Agents.
+[![version](https://img.shields.io/badge/version-0.4.0-blue)](https://github.com/VibeTensor/attestix-js)
+
+TypeScript SDK and offline verifier for [Attestix](https://github.com/VibeTensor/attestix) - Attestation Infrastructure for AI Agents.
+
+This is the JavaScript/TypeScript engine in the Attestix family. Version **0.4.0**
+is aligned with the Attestix 0.4.0 release line: the same name, the same version,
+and the same conformance suite across every ecosystem (Python on PyPI, this package
+on npm, and the Go / Rust / Java / R verifier ports). A credential or delegation
+issued by Attestix 0.4.0 (in any engine) verifies here, byte-for-byte, offline.
 
 Provides typed client methods for identity management, verifiable credentials, compliance tracking, reputation scoring, provenance recording, delegation chains, DID operations, and blockchain anchoring.
 
@@ -9,6 +17,18 @@ Provides typed client methods for identity management, verifiable credentials, c
 ```bash
 npm install attestix
 ```
+
+> **Heads-up on the package name (transition state).** The unscoped `attestix`
+> name on npm is claimed but **not yet published** — the unscoped publish is
+> pending a registry token. Until that lands, the published artifact is the
+> scoped, stale `@vibetensor/attestix@0.2.0`:
+>
+> ```bash
+> npm install @vibetensor/attestix   # currently published (0.2.0)
+> ```
+>
+> Once `attestix@0.4.0` is published, `@vibetensor/attestix` will be deprecated
+> with a pointer to the unscoped name. Prefer `attestix` in new code.
 
 ## Quick Start
 
@@ -55,6 +75,21 @@ format and canonicalization rules are documented in [`SPEC.md`](./SPEC.md).
 
 It adds one small, audited dependency (`@noble/curves`) for Ed25519 and no
 network access.
+
+### Cross-language conformance
+
+The verifier is held to the **shared conformance vectors** maintained in the
+foundation repo at
+[`spec/verify/v1`](https://github.com/VibeTensor/attestix/tree/main/spec/verify/v1)
+(canonical-form rules in
+[`README.md`](https://github.com/VibeTensor/attestix/blob/main/spec/verify/v1/README.md),
+verifier surface in
+[`CONFORMANCE.md`](https://github.com/VibeTensor/attestix/blob/main/spec/verify/v1/CONFORMANCE.md)).
+These are the **same** vectors every port (Go, Rust, Java, R, JS) must reproduce
+byte-for-byte. This package runs them in CI
+([`tests/conformance.test.ts`](./tests/conformance.test.ts)) against the
+`vectors.json` for attestix 0.4.0, so the npm engine stays on the exact same
+suite as the others.
 
 ### Verify a credential
 
@@ -254,6 +289,8 @@ Apache-2.0
 
 ## Links
 
-- [Attestix API Documentation](https://docs.attestix.io)
-- [GitHub](https://github.com/VibeTensor/attestix-js)
+- [Attestix (parent repo)](https://github.com/VibeTensor/attestix) — the Attestix core engine (Python, PyPI)
+- [Verifier conformance spec](https://github.com/VibeTensor/attestix/tree/main/spec/verify/v1) — shared cross-language vectors + canonical-form rules
+- [Attestix Documentation](https://attestix.io/docs)
+- [GitHub (this package)](https://github.com/VibeTensor/attestix-js)
 - [VibeTensor](https://vibetensor.com)
