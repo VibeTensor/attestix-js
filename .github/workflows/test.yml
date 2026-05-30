@@ -36,7 +36,12 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        # `npm ci` can fail with "Cannot find module @rollup/rollup-linux-x64-gnu"
+        # because of the npm optional-dependencies bug (npm/cli#4828): a
+        # package-lock.json generated on one OS omits the installable node entries
+        # for other platforms' optional native binaries. Fall back to a fresh
+        # install on the runner's platform when that happens.
+        run: npm ci || (rm -rf node_modules package-lock.json && npm install)
 
       - name: Typecheck (tsc --noEmit)
         run: npm run lint
