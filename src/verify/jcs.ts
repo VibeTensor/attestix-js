@@ -33,10 +33,44 @@ export class JcsUnsupportedValueError extends Error {
 export type JsonValue =
 	| string
 	| number
+	| bigint
 	| boolean
 	| null
 	| JsonValue[]
 	| { [key: string]: JsonValue };
+
+/**
+ * Parse JSON while preserving integers beyond Number.MAX_SAFE_INTEGER (2^53-1)
+ * as BigInt, so they survive {@link canonicalize} without precision loss. A
+ * plain `JSON.parse` rounds such integers to the nearest double before the
+ * canonicalizer ever sees them, which would diverge from the Python/Go/Rust
+ * ports. Use this to parse any payload that may carry large integer fields.
+ *
+ * Requires reviver source access (Node >= 21 / modern engines). Where that is
+ * unavailable it degrades to plain JSON.parse behaviour for oversized integers.
+ */
+export function parseCanonicalJson(text: string): JsonValue {
+	return JSON.parse(
+		text,
+		function (
+			_key: string,
+			value: unknown,
+			context?: { source?: string },
+		): unknown {
+			if (
+				typeof value === 'number' &&
+				Number.isInteger(value) &&
+				!Number.isSafeInteger(value) &&
+				context &&
+				typeof context.source === 'string' &&
+				/^-?\d+$/.test(context.source)
+			) {
+				return BigInt(context.source);
+			}
+			return value;
+		},
+	) as JsonValue;
+}
 
 /**
  * Serialize a JSON value to its canonical string form (matching Python).
@@ -67,6 +101,12 @@ function serialize(value: JsonValue): string {
 	}
 	if (t === 'number') {
 		return serializeNumber(value as number);
+	}
+	if (t === 'bigint') {
+		// A BigInt is always an exact integer; emit its decimal string. This is
+		// how integers beyond 2^53 (which a JS `number` cannot represent) are
+		// canonicalized to match the Python/Go/Rust ports byte-for-byte.
+		return (value as bigint).toString();
 	}
 	if (Array.isArray(value)) {
 		return '[' + value.map((v) => serialize(v)).join(',') + ']';

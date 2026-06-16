@@ -50,31 +50,17 @@ describe(`shared verifier conformance vectors (attestix ${suite.attestix_version
 			switch (v.kind) {
 				case 'canonicalize': {
 					// The shared vector includes `big_int: 9007199254740993` (2^53 + 1),
-					// which a JS `number` (IEEE-754 double) cannot represent — `JSON.parse`
-					// already rounded it to 2^53. That is a JS-runtime number limitation,
-					// not a canonicalizer defect; the Python/Go/Rust ports preserve it
-					// because their integers are arbitrary/64-bit. So we assert the
-					// canonical form over every field JS *can* represent (i.e. drop the
-					// out-of-safe-range integer) and require a byte-exact match there.
+					// which a JS `number` (IEEE-754 double) cannot represent: a plain
+					// `JSON.parse` rounds it to 2^53. The canonicalizer now accepts
+					// BigInt and serializes it exactly, so we preserve the field as a
+					// BigInt (as `parseCanonicalJson` would from raw JSON text) and
+					// require a byte-exact match against the full reference hex.
 					const input = { ...(v.input as Record<string, unknown>) };
-					delete input.big_int;
-					const want = JSON.parse(JSON.stringify(v.input)) as Record<
-						string,
-						unknown
-					>;
-					delete want.big_int;
+					if (typeof input.big_int !== 'undefined') {
+						input.big_int = BigInt('9007199254740993');
+					}
 					const got = canonicalize(input as never);
-					const expected = canonicalize(want as never);
-					expect(toHex(got)).toBe(toHex(expected));
-					// And the full canonical form (incl. big_int) must match once the
-					// known 2^53 rounding is accounted for — the reference hex ends in
-					// ...740993 while JS sees ...740992; assert everything else is byte
-					// identical by string-replacing only that one rounded digit.
-					const refHexNoBig = (v.canonical_bytes_hex as string).replace(
-						'39303037313939323534373430393933', // "9007199254740993"
-						'39303037313939323534373430393932', // "9007199254740992"
-					);
-					expect(toHex(canonicalize(v.input as never))).toBe(refHexNoBig);
+					expect(toHex(got)).toBe(v.canonical_bytes_hex as string);
 					break;
 				}
 
