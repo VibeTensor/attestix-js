@@ -10,12 +10,12 @@ the JS side matches the **engine**, not an idealized RFC.
 
 Source files inspected (in `D:\Development\vibetensor-products\Attestix`):
 
-- `auth/crypto.py` — canonicalization, signing, did:key codec.
-- `signing/inprocess_signer.py`, `signing/signer.py` — the signer seam (default = byte-identical to v0.3.0).
-- `services/credential_service.py` — VC / VP issuance + proof.
-- `services/delegation_service.py` — UCAN-style JWT delegation chains.
-- `services/did_service.py` — did:key / did:web documents.
-- `auth/token_parser.py` — JWT detection.
+- `auth/crypto.py`: canonicalization, signing, did:key codec.
+- `signing/inprocess_signer.py`, `signing/signer.py`: the signer seam (default = byte-identical to v0.4.0).
+- `services/credential_service.py`: VC / VP issuance + proof.
+- `services/delegation_service.py`: UCAN-style JWT delegation chains.
+- `services/did_service.py`: did:key / did:web documents.
+- `auth/token_parser.py`: JWT detection.
 
 ---
 
@@ -75,7 +75,7 @@ byte-for-byte against Python output:
    non-ASCII, so the UTF-8 encoding of the resulting string matches.
 4. **String escaping** matches JSON / JS `JSON.stringify` for the shared set:
    `"` -> `\"`, `\` -> `\\`, U+0008 -> `\b`, U+0009 -> `\t`, U+000A -> `\n`,
-   U+000C -> `\f`, U+000D -> `\r`, and other control chars U+0000–U+001F ->
+   U+000C -> `\f`, U+000D -> `\r`, and other control chars U+0000 to U+001F ->
    `\u00xx` (lowercase hex). `/` is NOT escaped. `<`, `>`, `&` are NOT escaped.
    U+007F (DEL) is emitted raw (not escaped) by both engines.
 5. **NFC normalization** of every string (keys and values) via
@@ -179,14 +179,14 @@ canonicalized by the rules in §3. The verifier:
    did:key's public key.
 
 It also checks structure (`type` contains `VerifiableCredential`), expiry
-(`expirationDate` in the future), and — if present locally — revocation. The
+(`expirationDate` in the future), and (if present locally) revocation. The
 offline JS verifier checks signature + structure + expiry; revocation is a
 local-storage concern and is reported as "not checkable offline".
 
 ## 6. Verifiable Presentation (VP)
 
 `create_verifiable_presentation`. Signed payload = the VP with **only `proof`
-removed** (note: differs from VC — VP excludes `proof` only, not
+removed** (note: differs from VC, VP excludes `proof` only, not
 `credentialStatus`). Each embedded credential is verified by §5 rules. The VP
 `proof.proofPurpose` is `authentication`, and `challenge`/`domain` may be
 present both at top level and inside `proof`.
@@ -202,7 +202,7 @@ base64url(header) . base64url(payload) . base64url(signature)
 
 - **Header**: `{"typ":"JWT","ucv":"0.9.0","alg":"EdDSA"}` (PyJWT serializes
   header keys; `alg` is `EdDSA`). The exact header bytes are whatever PyJWT
-  emits; the verifier does NOT recanonicalize — it verifies over the literal
+  emits; the verifier does NOT recanonicalize: it verifies over the literal
   `base64url(header) || "." || base64url(payload)` ASCII bytes, exactly as JWS
   requires.
 - **Payload claims**:

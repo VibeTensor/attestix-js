@@ -19,7 +19,7 @@ npm install attestix
 ```
 
 > **Heads-up on the package name (transition state).** The unscoped `attestix`
-> name on npm is claimed but **not yet published** — the unscoped publish is
+> name on npm is claimed but **not yet published**: the unscoped publish is
 > pending a registry token. Until that lands, the published artifact is the
 > scoped, stale `@vibetensor/attestix@0.2.0`:
 >
@@ -66,7 +66,7 @@ console.log(result.valid); // true
 
 Since v0.2.0 the package can verify Attestix Ed25519-signed **W3C Verifiable
 Credentials / Presentations** and **UCAN-style delegation chains** entirely
-offline — no API call, in Node or the browser. The canonical-JSON rules,
+offline (no API call), in Node or the browser. The canonical-JSON rules,
 `did:key` codec, and signed-field sets are byte-compatible with the Python
 Attestix engine, so a credential or delegation issued by the Python server
 verifies in JS/TS and vice-versa. This is the cross-engine interop path tracked
@@ -289,8 +289,8 @@ Apache-2.0
 
 ## Links
 
-- [Attestix (parent repo)](https://github.com/VibeTensor/attestix) — the Attestix core engine (Python, PyPI)
-- [Verifier conformance spec](https://github.com/VibeTensor/attestix/tree/main/spec/verify/v1) — shared cross-language vectors + canonical-form rules
+- [Attestix (parent repo)](https://github.com/VibeTensor/attestix): the Attestix core engine (Python, PyPI)
+- [Verifier conformance spec](https://github.com/VibeTensor/attestix/tree/main/spec/verify/v1): shared cross-language vectors + canonical-form rules
 - [Attestix Documentation](https://attestix.io/docs)
 - [GitHub (this package)](https://github.com/VibeTensor/attestix-js)
 - [VibeTensor](https://vibetensor.com)
