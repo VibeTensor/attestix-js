@@ -5,6 +5,20 @@ All notable changes to the `attestix` npm package are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-06-16
+
+### Fixed
+- Canonicalize integers beyond 2^53 via BigInt. The canonicalizer previously
+  accepted only `number`, so large integers lost precision before serialization
+  and the JS verifier could reject a signature the Python/Go/Rust/Java/R ports
+  accept. `JsonValue` now includes `bigint` (serialized as its exact decimal),
+  and `parseCanonicalJson()` preserves out-of-safe-range integers as BigInt.
+  The `canon-001` conformance test now asserts the true reference bytes.
+
+### Docs
+- Removed em/en-dashes from README/CHANGELOG/SPEC prose; synced stale Attestix
+  core version references; added CODE_OF_CONDUCT.
+
 ## [0.4.0] - 2026-05-30
 
 Version alignment to the Attestix 0.4.0 release line: the JS/TS engine now

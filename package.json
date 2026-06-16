@@ -1,6 +1,6 @@
 {
 	"name": "attestix",
-	"version": "0.4.0",
+	"version": "0.4.1",
 	"description": "TypeScript SDK for Attestix - Attestation Infrastructure for AI Agents. REST client plus offline, cross-engine verification of Ed25519 W3C VCs and UCAN delegation chains issued by Attestix 0.4.0. Conforms to the shared verifier conformance vectors (spec/verify/v1).",
 	"type": "module",
 	"main": "dist/index.js",
