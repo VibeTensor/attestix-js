@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.4.0] - 2026-05-30
 
-Version alignment to the Attestix 0.4.0 release line — the JS/TS engine now
+Version alignment to the Attestix 0.4.0 release line: the JS/TS engine now
 shares its name and version with the Python `attestix` 0.4.0 stable release on
 PyPI and the other verifier ports (Go, Rust, Java, R), so the story is "same
 name, same version, same conformance suite, every ecosystem."
@@ -24,8 +24,8 @@ name, same version, same conformance suite, every ecosystem."
 - **Shared cross-language conformance vectors.** `tests/conformance.test.ts`
   loads the authoritative `vectors.json` from the foundation repo
   (`VibeTensor/attestix:spec/verify/v1`, attestix 0.4.0) and drives every kind
-  through the public API — `canonicalize`, `didKeyToPublicKey`,
-  `verifyCredential`, and `verifyDelegationChain`. This is the **same** suite the
+  through the public API (`canonicalize`, `didKeyToPublicKey`,
+  `verifyCredential`, and `verifyDelegationChain`). This is the **same** suite the
   Go / Rust / Java / R ports must reproduce byte-for-byte, so the npm engine is
   now on the identical conformance contract. The vectors are vendored at
   `tests/vectors/conformance/vectors.json`.
