@@ -2,7 +2,7 @@
  * Canonical JSON serialization matching the Python Attestix engine's
  * `auth.crypto.canonicalize_json`.
  *
- * This is NOT strict RFC 8785 — it is byte-for-byte compatible with what the
+ * This is NOT strict RFC 8785 - it is byte-for-byte compatible with what the
  * Python engine actually produces:
  *   json.dumps(normalize(obj), sort_keys=True, separators=(",",":"),
  *              ensure_ascii=False).encode("utf-8")
@@ -13,7 +13,7 @@
  *  - non-ASCII emitted as raw UTF-8 (NOT \uXXXX escapes)
  *  - every string NFC-normalized
  *  - whole-valued floats coerced to integers (1.0 -> 1)
- *  - control chars U+0000–U+001F escaped as \b \t \n \f \r or \u00xx (lowercase)
+ *  - control chars U+0000-U+001F escaped as \b \t \n \f \r or \u00xx (lowercase)
  *  - "/", "<", ">", "&" NOT escaped; U+007F emitted raw
  *
  * Numbers that would serialize differently in JS vs Python (exponential

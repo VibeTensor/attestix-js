@@ -19,6 +19,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed em/en-dashes from README/CHANGELOG/SPEC prose; synced stale Attestix
   core version references; added CODE_OF_CONDUCT.
 
+### Notes
+- The bare `attestix` package is now published on npm (0.4.1). The scoped
+  `@vibetensor/attestix` is deprecated; prefer `attestix` in new code. This
+  supersedes the 0.4.0 "Publishing is not yet done" note below.
+
 ## [0.4.0] - 2026-05-30
 
 Version alignment to the Attestix 0.4.0 release line: the JS/TS engine now
@@ -49,11 +54,10 @@ name, same version, same conformance suite, every ecosystem."
 
 ### Notes
 
-- **Publishing is not yet done.** The unscoped `attestix` name is claimed on npm
-  but not published; this release is staged for a future token-free publish via
-  GitHub Release (OIDC trusted publishing, `.github/workflows/publish.yml`). The
-  currently published artifact remains the scoped, stale
-  `@vibetensor/attestix@0.2.0`.
+- This release was staged for publish via GitHub Release (OIDC trusted
+  publishing, `.github/workflows/publish.yml`). Superseded by 0.4.1: the bare
+  `attestix` name is now published on npm and the scoped `@vibetensor/attestix`
+  is deprecated.
 
 ## [0.2.0]
 

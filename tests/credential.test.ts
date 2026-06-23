@@ -16,7 +16,7 @@ function loadVc(): Record<string, unknown> {
 // validity window so the test is stable over time.
 const NOW = Date.parse('2026-06-01T00:00:00Z');
 
-describe('verifyCredential — cross-engine VC verification', () => {
+describe('verifyCredential - cross-engine VC verification', () => {
 	it('accepts a valid Python-signed credential', () => {
 		const vc = loadVc();
 		const result = verifyCredential(vc, { now: NOW });

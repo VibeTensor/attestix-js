@@ -35,7 +35,7 @@ const escalation: { leaf_token: string; chain_leaf_to_root: string[] } = JSON.pa
 // a large clock tolerance to avoid flakiness.
 const OPTS = { clockToleranceSeconds: 10 * 365 * 24 * 3600 };
 
-describe('verifyDelegationChain — cross-engine UCAN/JWT verification', () => {
+describe('verifyDelegationChain - cross-engine UCAN/JWT verification', () => {
 	it('accepts a valid 3-link chain from a single leaf token (walks prf)', () => {
 		const result = verifyDelegationChain(fixture.leaf_token, OPTS);
 		expect(result.valid).toBe(true);

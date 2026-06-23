@@ -25,7 +25,7 @@ function fromHex(hex: string): Uint8Array {
 	return out;
 }
 
-describe('did:key codec — parity with Python engine', () => {
+describe('did:key codec - parity with Python engine', () => {
 	it('encodes the Python server public key to the same did:key', () => {
 		const pub = fromHex(keys.server_public_key_hex);
 		expect(publicKeyToDidKey(pub)).toBe(keys.server_did);

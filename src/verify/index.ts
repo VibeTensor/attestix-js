@@ -3,7 +3,7 @@
  *
  * These functions verify Ed25519-signed W3C Verifiable Credentials /
  * Presentations and UCAN-style delegation chains produced by the Python
- * Attestix engine — entirely offline (no API call), in Node or the browser.
+ * Attestix engine - entirely offline (no API call), in Node or the browser.
  * Canonicalization, did:key codec, and signed-field sets are byte-compatible
  * with the Python engine (see SPEC.md).
  */

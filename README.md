@@ -1,10 +1,10 @@
 # attestix
 
-[![version](https://img.shields.io/badge/version-0.4.0-blue)](https://github.com/VibeTensor/attestix-js)
+[![version](https://img.shields.io/badge/version-0.4.1-blue)](https://github.com/VibeTensor/attestix-js)
 
 TypeScript SDK and offline verifier for [Attestix](https://github.com/VibeTensor/attestix) - Attestation Infrastructure for AI Agents.
 
-This is the JavaScript/TypeScript engine in the Attestix family. Version **0.4.0**
+This is the JavaScript/TypeScript engine in the Attestix family. Version **0.4.1**
 is aligned with the Attestix 0.4.0 release line: the same name, the same version,
 and the same conformance suite across every ecosystem (Python on PyPI, this package
 on npm, and the Go / Rust / Java / R verifier ports). A credential or delegation
@@ -18,17 +18,8 @@ Provides typed client methods for identity management, verifiable credentials, c
 npm install attestix
 ```
 
-> **Heads-up on the package name (transition state).** The unscoped `attestix`
-> name on npm is claimed but **not yet published**: the unscoped publish is
-> pending a registry token. Until that lands, the published artifact is the
-> scoped, stale `@vibetensor/attestix@0.2.0`:
->
-> ```bash
-> npm install @vibetensor/attestix   # currently published (0.2.0)
-> ```
->
-> Once `attestix@0.4.0` is published, `@vibetensor/attestix` will be deprecated
-> with a pointer to the unscoped name. Prefer `attestix` in new code.
+> The package is published on npm as `attestix` (0.4.1). The scoped
+> `@vibetensor/attestix` is deprecated; prefer `attestix` in new code.
 
 ## Quick Start
 
@@ -88,7 +79,7 @@ verifier surface in
 These are the **same** vectors every port (Go, Rust, Java, R, JS) must reproduce
 byte-for-byte. This package runs them in CI
 ([`tests/conformance.test.ts`](./tests/conformance.test.ts)) against the
-`vectors.json` for attestix 0.4.0, so the npm engine stays on the exact same
+`vectors.json` for attestix 0.4.1, so the npm engine stays on the exact same
 suite as the others.
 
 ### Verify a credential

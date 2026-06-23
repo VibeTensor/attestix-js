@@ -12,7 +12,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 /**
  * Shared cross-language verifier conformance vectors.
  *
- * This is the SAME vectors.json that the Go / Rust / Java / R ports consume —
+ * This is the SAME vectors.json that the Go / Rust / Java / R ports consume -
  * copied verbatim from the foundation repo at
  * `VibeTensor/attestix:spec/verify/v1/vectors.json` (attestix 0.4.0). Every port
  * MUST reproduce the `expected` values byte-for-byte; running them here keeps the

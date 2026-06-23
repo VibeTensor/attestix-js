@@ -11,7 +11,7 @@ import { ed25519 } from '@noble/curves/ed25519.js';
  * @param signature 64-byte raw Ed25519 signature.
  * @param message   the exact bytes that were signed.
  * @param publicKey 32-byte raw Ed25519 public key.
- * @returns true iff the signature is valid; never throws on bad input — a
+ * @returns true iff the signature is valid; never throws on bad input - a
  *          malformed signature/key is treated as a failed verification.
  */
 export function verifyEd25519(

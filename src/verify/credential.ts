@@ -55,7 +55,7 @@ function stripFields(obj: JsonObject, fields: string[]): JsonObject {
 
 /**
  * Verify a single VC's Ed25519 proof, structure, expiry, and embedded
- * revocation status — without contacting the Attestix API.
+ * revocation status - without contacting the Attestix API.
  */
 export function verifyCredential(
 	credential: unknown,

@@ -22,7 +22,7 @@ function toHex(bytes: Uint8Array): string {
 		.join('');
 }
 
-describe('JCS canonicalization — cross-engine parity with Python', () => {
+describe('JCS canonicalization - cross-engine parity with Python', () => {
 	it('produces byte-identical canonical bytes for every Python vector', () => {
 		expect(vectors.length).toBeGreaterThan(0);
 		for (const v of vectors) {
