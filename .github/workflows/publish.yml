@@ -36,8 +36,8 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       - name: Install dependencies
-        # See test.yml: npm/cli#4828 optional-deps bug fallback.
-        run: npm ci || (rm -rf node_modules package-lock.json && npm install)
+        # Lockfile-only install; see test.yml.
+        run: npm ci
 
       - name: Run tests
         run: npm test
