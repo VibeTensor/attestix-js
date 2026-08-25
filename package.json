@@ -64,5 +64,8 @@
 	},
 	"dependencies": {
 		"@noble/curves": "2.2.0"
+	},
+	"overrides": {
+		"esbuild": ">=0.28.1"
 	}
 }

@@ -48,13 +48,22 @@ const RETRY_STATUS_CODES = new Set([429, 503]);
 const MAX_RETRIES = 1;
 const BASE_RETRY_DELAY = 1000;
 
+/** Linear-time trailing-slash strip (avoids the polynomial regex /\/+$/). */
+function stripTrailingSlashes(url: string): string {
+	let end = url.length;
+	while (end > 0 && url.charCodeAt(end - 1) === 47) {
+		end--;
+	}
+	return url.slice(0, end);
+}
+
 export class AttestixClient {
 	private readonly baseUrl: string;
 	private readonly apiKey: string;
 	private readonly timeout: number;
 
 	constructor(options: AttestixOptions) {
-		this.baseUrl = options.baseUrl.replace(/\/+$/, '');
+		this.baseUrl = stripTrailingSlashes(options.baseUrl);
 		this.apiKey = options.apiKey;
 		this.timeout = options.timeout ?? DEFAULT_TIMEOUT;
 	}

@@ -20,8 +20,14 @@ const DECODE = (() => {
 })();
 
 export function base64urlDecode(input: string): Uint8Array {
-	// Strip padding and any surrounding whitespace.
-	const s = input.replace(/=+$/g, '').trim();
+	// Strip surrounding whitespace, then trailing padding, without a regex
+	// (/=+$/ is polynomial on inputs like "===...=x").
+	const trimmed = input.trim();
+	let end = trimmed.length;
+	while (end > 0 && trimmed.charCodeAt(end - 1) === 61) {
+		end--;
+	}
+	const s = trimmed.slice(0, end);
 	const len = s.length;
 	const outLen = Math.floor((len * 6) / 8);
 	const out = new Uint8Array(outLen);
