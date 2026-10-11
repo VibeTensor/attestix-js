@@ -91,7 +91,7 @@ export function verifyCredential(
 	if (checkExpiry && typeof expStr === 'string') {
 		const exp = Date.parse(expStr);
 		const now = options.now ?? Date.now();
-		checks.not_expired = Number.isNaN(exp) ? true : now < exp;
+		checks.not_expired = !Number.isNaN(exp) && now < exp;
 	} else {
 		checks.not_expired = true;
 	}
@@ -104,13 +104,17 @@ export function verifyCredential(
 			typeof proof.verificationMethod === 'string'
 				? proof.verificationMethod
 				: '';
-		let issuerDid = vm ? didFromVerificationMethod(vm) : '';
-		if (!issuerDid && isObject(credential.issuer)) {
-			const iid = (credential.issuer as JsonObject).id;
-			if (typeof iid === 'string') issuerDid = iid;
-		}
+		const issuerDid = typeof credential.issuer === 'string'
+			? credential.issuer
+			: isObject(credential.issuer) && typeof credential.issuer.id === 'string'
+				? credential.issuer.id
+				: '';
 		issuer = issuerDid;
 		try {
+			// The unsigned proof metadata cannot replace the claimed issuer's key.
+			if (vm && didFromVerificationMethod(vm) !== issuerDid) {
+				throw new Error('Verification method does not match issuer');
+			}
 			const payload = stripFields(credential, VC_MUTABLE_FIELDS);
 			const message = canonicalize(payload);
 			const sig = base64urlDecode(proof.proofValue);
