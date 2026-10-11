@@ -1,7 +1,7 @@
 /**
  * Offline verification of Attestix W3C Verifiable Credentials and Verifiable
  * Presentations. Reproduces the Python engine's signing rules (see SPEC.md
- * §5/§6): the signature covers the credential object with `proof` and
+ * section 5/section 6): the signature covers the credential object with `proof` and
  * `credentialStatus` removed, canonicalized via the JCS rules, verified with
  * the issuer's did:key Ed25519 public key.
  */
@@ -88,10 +88,10 @@ export function verifyCredential(
 	// Expiry.
 	const checkExpiry = options.checkExpiry !== false;
 	const expStr = credential.expirationDate;
-	if (checkExpiry && typeof expStr === 'string') {
-		const exp = Date.parse(expStr);
+	if (checkExpiry && Object.prototype.hasOwnProperty.call(credential, 'expirationDate')) {
+		const exp = typeof expStr === 'string' ? Date.parse(expStr) : NaN;
 		const now = options.now ?? Date.now();
-		checks.not_expired = !Number.isNaN(exp) && now < exp;
+		checks.not_expired = Number.isFinite(exp) && Number.isFinite(now) && now < exp;
 	} else {
 		checks.not_expired = true;
 	}
@@ -111,6 +111,9 @@ export function verifyCredential(
 				: '';
 		issuer = issuerDid;
 		try {
+			if (Object.prototype.hasOwnProperty.call(proof, 'verificationMethod') && !vm) {
+				throw new Error('Invalid verification method');
+			}
 			// The unsigned proof metadata cannot replace the claimed issuer's key.
 			if (vm && didFromVerificationMethod(vm) !== issuerDid) {
 				throw new Error('Verification method does not match issuer');
@@ -203,12 +206,17 @@ export function verifyPresentation(
 			typeof proof.verificationMethod === 'string'
 				? proof.verificationMethod
 				: '';
-		const issuerDid = vm ? didFromVerificationMethod(vm) : holder ?? '';
 		try {
+			if (Object.prototype.hasOwnProperty.call(proof, 'verificationMethod') && !vm) {
+				throw new Error('Invalid verification method');
+			}
+			if (!holder || (vm && didFromVerificationMethod(vm) !== holder)) {
+				throw new Error('Verification method does not match holder');
+			}
 			const payload = stripFields(presentation, ['proof']);
 			const message = canonicalize(payload);
 			const sig = base64urlDecode(proof.proofValue);
-			const pub = didKeyToPublicKey(issuerDid);
+			const pub = didKeyToPublicKey(holder);
 			vpSignatureValid = verifyEd25519(sig, message, pub);
 		} catch {
 			vpSignatureValid = false;

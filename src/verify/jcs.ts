@@ -7,7 +7,7 @@
  *   json.dumps(normalize(obj), sort_keys=True, separators=(",",":"),
  *              ensure_ascii=False).encode("utf-8")
  *
- * Rules (see SPEC.md §3):
+ * Rules (see SPEC.md section 3):
  *  - object keys sorted by Unicode code point (Python default string sort)
  *  - compact separators: "," and ":"
  *  - non-ASCII emitted as raw UTF-8 (NOT \uXXXX escapes)
@@ -47,7 +47,7 @@ export type JsonValue =
  * ports. Use this to parse any payload that may carry large integer fields.
  *
  * Requires reviver source access (Node >= 21 / modern engines). Where that is
- * unavailable it degrades to plain JSON.parse behaviour for oversized integers.
+ * unavailable it rejects oversized integers rather than silently rounding them.
  */
 export function parseCanonicalJson(text: string): JsonValue {
 	return JSON.parse(
@@ -66,6 +66,9 @@ export function parseCanonicalJson(text: string): JsonValue {
 				/^-?\d+$/.test(context.source)
 			) {
 				return BigInt(context.source);
+			}
+			if (typeof value === 'number' && Number.isInteger(value) && !Number.isSafeInteger(value)) {
+				throw new JcsUnsupportedValueError('Integer source unavailable; cannot preserve precision');
 			}
 			return value;
 		},
@@ -114,7 +117,16 @@ function serialize(value: JsonValue): string {
 	if (t === 'object') {
 		const obj = value as { [key: string]: JsonValue };
 		// Sort keys by Unicode code point (matches Python's default str sort).
-		const keys = Object.keys(obj).sort(compareByCodePoint);
+		const keys = Object.keys(obj);
+		const normalized = new Set<string>();
+		for (const key of keys) {
+			const nfc = key.normalize('NFC');
+			if (normalized.has(nfc)) {
+				throw new JcsUnsupportedValueError('Duplicate normalized object key');
+			}
+			normalized.add(nfc);
+		}
+		keys.sort((a, b) => compareByCodePoint(a.normalize('NFC'), b.normalize('NFC')));
 		const parts: string[] = [];
 		for (const k of keys) {
 			parts.push(serializeString(k) + ':' + serialize(obj[k]));
@@ -160,6 +172,9 @@ function serializeNumber(n: number): string {
 		);
 	}
 	if (Number.isInteger(n)) {
+		if (!Number.isSafeInteger(n)) {
+			throw new JcsUnsupportedValueError('Unsafe integer; use parseCanonicalJson or bigint');
+		}
 		// Python serializes ints and whole-valued floats without a decimal
 		// point or exponent. JS String(int) does too for safe integers; guard
 		// against magnitudes that JS would render in exponential form.
