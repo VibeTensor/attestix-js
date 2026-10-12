@@ -1,7 +1,7 @@
 {
 	"name": "attestix",
-	"version": "0.4.1",
-	"description": "TypeScript SDK for Attestix - Attestation Infrastructure for AI Agents. REST client plus offline, cross-engine verification of Ed25519 W3C VCs and UCAN delegation chains issued by Attestix 0.4.0. Conforms to the shared verifier conformance vectors (spec/verify/v1).",
+	"version": "0.4.2",
+	"description": "TypeScript SDK for Attestix - Attestation Infrastructure for AI Agents. REST client and offline Ed25519 credential and UCAN delegation verifier for the supported Attestix canonical profile.",
 	"type": "module",
 	"main": "dist/index.js",
 	"module": "dist/index.js",
@@ -38,7 +38,7 @@
 		"vitest": "^4.1.11"
 	},
 	"license": "Apache-2.0",
-	"author": "VibeTensor Inc.",
+	"author": "VibeTensor",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/VibeTensor/attestix-js"

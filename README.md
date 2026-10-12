@@ -16,7 +16,7 @@ used by the verifier, including TextEncoder/TextDecoder and Unicode normalizatio
 npm install attestix
 ```
 
-The source manifest version remains 0.4.1. This does not establish that a
+The source manifest version is 0.4.2. This does not establish that a
 registry release contains the current main-branch fixes. Select a reviewed
 published version or build a reviewed checkout:
 
@@ -27,7 +27,7 @@ npm test
 npm run build
 ```
 
-See [CHANGELOG.md](CHANGELOG.md) for main-branch changes recorded as Unreleased.
+See [CHANGELOG.md](CHANGELOG.md) for the 0.4.2 release changes.
 
 ## Quick Start
 
