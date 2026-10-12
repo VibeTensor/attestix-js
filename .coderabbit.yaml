@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: en-US
+reviews:
+  auto_review:
+    enabled: true
+    drafts: true
+    base_branches:
+    - main
+  profile: assertive
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: true
+  path_filters:
+  - '!**/node_modules/**'
+  - '!**/dist/**'
+  - '!**/coverage/**'
+  - '!package-lock.json'
+  path_instructions:
+  - path: src/verify/**/*.ts
+    instructions: Check issuer and holder key binding, fail-closed malformed input,
+      canonicalization compatibility, signature verification and trust boundaries.
+  - path: src/**/*.ts
+    instructions: Check input validation, strict TypeScript types, runtime portability
+      and compatibility with the documented API.
+  - path: tests/**/*.ts
+    instructions: Check independent adversarial regression coverage and compatibility
+      with the shared verifier conformance vectors.
+chat:
+  auto_reply: true
+knowledge_base:
+  opt_out: false
+  learnings:
+    scope: auto
+early_access: true
+tone_instructions: '- Be constructive and helpful
+
+  - Focus on code quality and security
+
+  - Prioritize security issues in auth/crypto code
+
+  '
