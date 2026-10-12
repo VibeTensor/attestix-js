@@ -1,25 +1,33 @@
 # attestix
 
-[![version](https://img.shields.io/badge/version-0.4.1-blue)](https://github.com/VibeTensor/attestix-js)
+TypeScript REST client and offline verifier for the
+[Attestix core](https://github.com/VibeTensor/attestix). Offline functions verify
+Ed25519 credentials and presentations plus UCAN-style delegation tokens without
+contacting a server. Client methods call a configured API and require its
+availability and authentication.
 
-TypeScript SDK and offline verifier for [Attestix](https://github.com/VibeTensor/attestix) - Attestation Infrastructure for AI Agents.
+## Installation and source status
 
-This is the JavaScript/TypeScript engine in the Attestix family. Version **0.4.1**
-is aligned with the Attestix 0.4.0 release line: the same name, the same version,
-and the same conformance suite across every ecosystem (Python on PyPI, this package
-on npm, and the Go / Rust / Java / R verifier ports). A credential or delegation
-issued by Attestix 0.4.0 (in any engine) verifies here, byte-for-byte, offline.
+Requires Node 20.19.0 or later, as declared in [package.json](package.json).
+The current source uses @noble/curves 2.2.0. Browser use also requires the APIs
+used by the verifier, including TextEncoder/TextDecoder and Unicode normalization.
 
-Provides typed client methods for identity management, verifiable credentials, compliance tracking, reputation scoring, provenance recording, delegation chains, DID operations, and blockchain anchoring.
-
-## Installation
-
-```bash
+```sh
 npm install attestix
 ```
 
-> The package is published on npm as `attestix` (0.4.1). The scoped
-> `@vibetensor/attestix` is deprecated; prefer `attestix` in new code.
+The source manifest version remains 0.4.1. This does not establish that a
+registry release contains the current main-branch fixes. Select a reviewed
+published version or build a reviewed checkout:
+
+```sh
+npm ci
+npm run lint
+npm test
+npm run build
+```
+
+See [CHANGELOG.md](CHANGELOG.md) for main-branch changes recorded as Unreleased.
 
 ## Quick Start
 
@@ -27,7 +35,7 @@ npm install attestix
 import { AttestixClient } from 'attestix';
 
 const client = new AttestixClient({
-  baseUrl: 'https://api.attestix.io',
+  baseUrl: 'https://your-attestix-server.example',
   apiKey: 'your-api-key',
 });
 
@@ -50,44 +58,31 @@ const credential = await client.issueCredential({
 
 // Verify it
 const result = await client.verifyCredential(credential.credential_id);
-console.log(result.valid); // true
+console.log(result.valid); // The server's verification verdict
 ```
 
 ## Offline verification (cross-engine interop)
 
-Since v0.2.0 the package can verify Attestix Ed25519-signed **W3C Verifiable
-Credentials / Presentations** and **UCAN-style delegation chains** entirely
-offline (no API call), in Node or the browser. The canonical-JSON rules,
-`did:key` codec, and signed-field sets are byte-compatible with the Python
-Attestix engine, so a credential or delegation issued by the Python server
-verifies in JS/TS and vice-versa. This is the cross-engine interop path tracked
-in [attestix#7](https://github.com/VibeTensor/attestix/issues/7); the exact wire
-format and canonicalization rules are documented in [`SPEC.md`](./SPEC.md).
-
-It adds one small, audited dependency (`@noble/curves`) for Ed25519 and no
-network access.
+The offline functions accept raw credential/presentation objects or compact
+JWT delegation tokens, separately from REST response records. Their signing
+form is documented in [SPEC.md](SPEC.md). Compatibility is tested against the
+vendored vectors and supported canonical values; arbitrary Python/JavaScript
+floating-point equivalence is not guaranteed.
 
 ### Cross-language conformance
 
-The verifier is held to the **shared conformance vectors** maintained in the
-foundation repo at
-[`spec/verify/v1`](https://github.com/VibeTensor/attestix/tree/main/spec/verify/v1)
-(canonical-form rules in
-[`README.md`](https://github.com/VibeTensor/attestix/blob/main/spec/verify/v1/README.md),
-verifier surface in
-[`CONFORMANCE.md`](https://github.com/VibeTensor/attestix/blob/main/spec/verify/v1/CONFORMANCE.md)).
-These are the **same** vectors every port (Go, Rust, Java, R, JS) must reproduce
-byte-for-byte. This package runs them in CI
-([`tests/conformance.test.ts`](./tests/conformance.test.ts)) against the
-`vectors.json` for attestix 0.4.1, so the npm engine stays on the exact same
-suite as the others.
+The shared [v1 contract](https://github.com/VibeTensor/attestix/tree/main/spec/verify/v1)
+is represented by [vendored vectors](tests/vectors/conformance/vectors.json)
+and [conformance tests](tests/conformance.test.ts). Those cases cover canonical
+bytes, key decoding, valid/tampered/expired credentials, and delegation
+attenuation. They do not prove every possible input or every port's policy.
 
 ### Verify a credential
 
 ```typescript
 import { verifyCredential } from 'attestix';
 
-// `vc` is the raw VC JSON (e.g. from issueCredential, a file, or a QR payload)
+// `vc` is a raw VerifiableCredential object, not an API credential record.
 const result = verifyCredential(vc);
 
 if (result.valid) {
@@ -101,12 +96,24 @@ if (result.valid) {
 // result.checks = { structure_valid, signature_valid, not_expired, not_revoked }
 ```
 
-`verifyCredential` recomputes the canonical bytes over the signed fields
-(everything except the mutable `proof` and `credentialStatus`), then verifies
-the `Ed25519Signature2020` proof against the issuer's `did:key`. Revocation can
-only be confirmed against the embedded `credentialStatus`; live revocation is a
-server-side lookup, so `not_revoked` reflects only what is present in the
-document offline.
+`verifyCredential` signs everything except top-level `proof` and
+`credentialStatus`. It resolves the key from signed `issuer` or `issuer.id`;
+a present verification method must be a nonempty string with the same issuer
+DID before `#`. `verifyPresentation` instead binds the proof to signed `holder`
+and checks every embedded credential.
+
+By default, a present malformed expiry or non-finite `now` fails expiry;
+absent expiry is allowed. `options.now` is milliseconds since epoch for
+credentials and embedded credentials. `checkExpiry: false` intentionally skips
+that check. A valid credential requires structure, signature, expiry, and
+embedded revocation checks. Offline status is only the embedded boolean
+`credentialStatus.revoked`; it does not establish live revocation state.
+
+Invalid proof/key/canonicalization input returns a negative signature result.
+Direct canonicalization throws for unsupported values. This is not a full W3C
+schema validator or JSON-LD processor. Presentation verification does not check
+expected challenge/domain, freshness, or replay policy; apply those checks
+before relying on a holder authentication result.
 
 ### Verify a delegation chain
 
@@ -123,11 +130,16 @@ if (result.valid) {
 }
 ```
 
-`verifyDelegationChain` verifies every link's EdDSA JWS signature against its
-issuer `did:key`, walks the full `prf` proof chain, detects cycles, enforces
-expiry/`nbf`, and re-checks **capability attenuation** (each child's `att` must
-be a subset of its parent's `att`) so a forged chain that escalates scope is
-rejected.
+For a single token, verification walks `prf`, checks each EdDSA signature,
+numeric `exp` and `nbf`, repeated-`jti` cycles, and capability attenuation.
+`options.now` uses Unix seconds here, unlike credential verification.
+
+An explicit array is ordered leaf..root. That path checks listed signatures,
+numeric time claims, and attenuation between consecutive tokens; it does not
+independently enforce `prf` linkage or cycle detection. Use the single-token
+recursive path when ancestry checks are required. Missing/non-numeric time
+claims are not a required-expiry policy; apply required-claim and audience
+policy in the application. Neither path performs live revocation checks.
 
 ### Lower-level primitives
 
@@ -135,7 +147,7 @@ The canonicalizer, `did:key` codec, and raw Ed25519 verify are also exported:
 
 ```typescript
 import {
-  canonicalize,        // JSON value -> canonical UTF-8 bytes (Python-compatible)
+  canonicalize,        // Supported JSON value -> canonical UTF-8 bytes
   didKeyToPublicKey,   // did:key:z... -> 32-byte Ed25519 public key
   publicKeyToDidKey,   // 32-byte Ed25519 public key -> did:key:z...
   verifyEd25519,       // (signature, message, publicKey) -> boolean
@@ -232,8 +244,8 @@ import {
 |--------|-------------|
 | `verifyCredential(vc, options?)` | Verify a W3C VC's Ed25519 proof, structure, and expiry offline |
 | `verifyPresentation(vp, options?)` | Verify a VP's holder proof and every embedded credential offline |
-| `verifyDelegationChain(token \| tokens, options?)` | Verify a UCAN/JWT delegation chain (signatures, attenuation, expiry, cycles) |
-| `canonicalize(value)` | Canonical UTF-8 bytes matching the Python engine's JCS form |
+| `verifyDelegationChain(token \| tokens, options?)` | Recursive proof verification for a leaf token, or listed-link verification for an explicit array |
+| `canonicalize(value)` | Canonical bytes for supported v1 JSON values; throws on unsupported input |
 | `didKeyToPublicKey(did)` / `publicKeyToDidKey(bytes)` | did:key (Ed25519) decode / encode |
 | `verifyEd25519(sig, msg, pubKey)` | Raw Ed25519 signature verification |
 
@@ -266,13 +278,16 @@ try {
 
 ```typescript
 const client = new AttestixClient({
-  baseUrl: 'https://api.attestix.io',  // Required: API server URL
+  baseUrl: 'https://your-attestix-server.example',  // Required: API server URL
   apiKey: 'your-api-key',               // Required: API key
   timeout: 30000,                        // Optional: request timeout in ms (default: 30000)
 });
 ```
 
-The SDK automatically retries on 429 (rate limit) and 503 (service unavailable) responses with exponential backoff.
+The REST client retries once after a 429 or 503 response, using its configured
+request timeout. The delay uses Retry-After when supplied, otherwise one second.
+Other failures use the typed
+HTTP error surface. The API itself determines authorization and availability.
 
 ## License
 
@@ -280,7 +295,7 @@ Apache-2.0
 
 ## Links
 
-- [Attestix (parent repo)](https://github.com/VibeTensor/attestix): the Attestix core engine (Python, PyPI)
+- [Attestix core](https://github.com/VibeTensor/attestix)
 - [Verifier conformance spec](https://github.com/VibeTensor/attestix/tree/main/spec/verify/v1): shared cross-language vectors + canonical-form rules
 - [Attestix Documentation](https://attestix.io/docs)
 - [GitHub (this package)](https://github.com/VibeTensor/attestix-js)
