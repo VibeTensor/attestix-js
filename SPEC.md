@@ -1,259 +1,105 @@
-# Attestix Cross-Engine Verification Spec
+# Attestix JavaScript verification contract
 
-This document specifies the exact wire formats and canonicalization rules the
-`attestix` offline verifier must reproduce to verify artifacts
-produced by the Python Attestix engine (`VibeTensor/attestix`). It is the
-authority for closing GitHub issue [VibeTensor/attestix#7](https://github.com/VibeTensor/attestix/issues/7)
-(cross-engine interop). Everything here was derived by reading the Python
-source and probing its actual byte output (not from a published standard), so
-the JS side matches the **engine**, not an idealized RFC.
+This document describes the offline implementation currently present in main.
+The [shared v1 vectors](tests/vectors/conformance/vectors.json) are the
+compatibility reference, not a claim of support for every JSON value or policy.
 
-Source files inspected (in `D:\Development\vibetensor-products\Attestix`):
+## Ed25519 and did:key
 
-- `auth/crypto.py`: canonicalization, signing, did:key codec.
-- `signing/inprocess_signer.py`, `signing/signer.py`: the signer seam (default = byte-identical to v0.4.0).
-- `services/credential_service.py`: VC / VP issuance + proof.
-- `services/delegation_service.py`: UCAN-style JWT delegation chains.
-- `services/did_service.py`: did:key / did:web documents.
-- `auth/token_parser.py`: JWT detection.
+The verifier uses @noble/curves Ed25519 with 32-byte public keys and 64-byte
+signatures. A key identifier is `did:key:z` followed by base58btc of the
+multicodec bytes `0xed 0x01` and the raw public key. The verifier rejects invalid
+key encodings. It does not fetch a DID document or perform arbitrary DID-method
+resolution.
 
----
+## Canonical JSON
 
-## 1. Ed25519
+The signing form is JCS-style, not strict RFC 8785:
 
-- Curve: Ed25519 (RFC 8032), via Python `cryptography` `Ed25519PrivateKey` / `Ed25519PublicKey`.
-- Raw public key: 32 bytes. Raw private seed: 32 bytes.
-- Signature: 64 bytes, standard Ed25519 (PureEdDSA).
-- JS implementation uses `@noble/curves/ed25519` `ed25519.verify(sig, msg, pubkey)`.
+- NFC-normalize string values and object keys.
+- Reject distinct object keys that collide after normalization.
+- Sort normalized keys by Unicode code point, recursively.
+- Use compact JSON separators and UTF-8 output. Escape quotes, backslashes,
+  and control characters; non-ASCII text is emitted as UTF-8.
+- Emit safe integer `number` values and exact `bigint` values as decimal
+  integers. Whole-valued safe floats serialize as integers.
+- Reject unsafe integer `number` values, signed zero, non-finite numbers, and
+  floats whose JavaScript representation requires exponent notation.
 
-## 2. did:key codec
+Other finite non-integer decimal values are accepted, but general Python
+float-format equivalence is not established. Prefer integer/string fields
+for signed data. The vectors cover the simple decimal `1.5`.
 
-`public_key_to_did_key` / `did_key_to_public_key` in `auth/crypto.py`:
+`canonicalize(value)` returns UTF-8 bytes; `canonicalizeToString(value)` returns
+the same serialization as a string. Unsupported values throw
+`JcsUnsupportedValueError`. Do not treat canonicalization errors as success.
 
-```
-did:key:z<base58btc(0xed01 || raw_pubkey_32_bytes)>
-```
+Precision must be preserved before canonicalization. Ordinary `JSON.parse`
+can already round integer tokens beyond Number.MAX_SAFE_INTEGER. The internal
+`parseCanonicalJson` helper in [src/verify/jcs.ts](src/verify/jcs.ts) uses parser
+source context to preserve such tokens as bigint when the runtime provides it;
+without that context it rejects them. It is not exported from the package root.
+For public API use, supply a precision-preserving parsed value containing bigint;
+do not silently round oversized JSON integer tokens.
 
-- Multicodec prefix for ed25519-pub: bytes `0xED 0x01` (`ED25519_MULTICODEC_PREFIX`).
-- Multibase prefix: literal ASCII `z` (base58btc), placed **immediately after**
-  `did:key:`. The base58btc alphabet is the Bitcoin alphabet
-  (`123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz`).
-- Decode rejects anything whose first two decoded bytes are not `0xED 0x01`.
-- Verification-method fragment (`did_key_fragment`): for `did:key:zXXXX`, the
-  fragment is `#zXXXX` (the full multibase string, **including** the `z`). So a
-  full verificationMethod id is `did:key:zXXXX#zXXXX`.
+Collision rejection applies to keys retained in the parsed object. It does not
+promise rejection of identical duplicate raw JSON names before parsing.
 
-When verifying, the verifier extracts the issuer DID by splitting the proof's
-`verificationMethod` on `#` and taking the part before it (matching Python's
-`vm.split("#")[0]`). For credentials it falls back to `issuer.id`.
+## Credential proofs
 
-## 3. Canonical JSON (the critical interop surface)
+The signed payload excludes only top-level `proof` and `credentialStatus`.
+The key comes from signed `issuer` (string) or `issuer.id`. If
+`proof.verificationMethod` is present, it must be a nonempty string and its
+DID before `#` must equal that issuer. Unsigned proof metadata cannot substitute
+a different key. Ed25519 verifies `proof.proofValue` over the canonical bytes.
 
-`canonicalize_json(payload: dict) -> bytes` in `auth/crypto.py`. It is **NOT**
-strict RFC 8785; it is `json.dumps` with specific options plus a pre-pass:
+The decoder accepts padded/unpadded base64url and both standard/url-safe
+alphabets; Attestix VC wire proofs use padded base64url.
 
-```python
-normalized = _normalize_for_signing(payload)
-canonical = json.dumps(normalized, sort_keys=True,
-                       separators=(",", ":"), ensure_ascii=False)
-return canonical.encode("utf-8")
-```
+`verifyCredential` returns structured checks and `valid`. The verdict requires
+structure, signature, expiry, and embedded status. Structure requires a type
+array containing VerifiableCredential; this is not complete schema validation.
 
-Rules the JS canonicalizer (`src/verify/jcs.ts`) reproduces, verified
-byte-for-byte against Python output:
+Absent expirationDate passes expiry. A present malformed date fails it. A valid
+expiry requires `now < expiry`, with `now` in milliseconds since epoch;
+non-finite `now` fails when checking a present expiry. `checkExpiry: false`
+intentionally disables this check. A local revoked boolean fails status; absent
+status does not establish current revocation state. There is no live status lookup.
 
-1. **Object keys sorted by Unicode code point** (Python's default string sort).
-   This is code-point order, *not* UTF-16 code-unit order. For the BMP these
-   coincide; they only diverge for astral (> U+FFFF) keys, which do not occur
-   in Attestix payloads. The JS sorter sorts by code point to match Python
-   exactly regardless.
-2. **Compact separators**: `,` between items, `:` between key and value. No
-   spaces. (matches JS `JSON.stringify` default.)
-3. **`ensure_ascii=False`**: non-ASCII characters are emitted as their raw UTF-8
-   bytes, NOT `\uXXXX` escapes. e.g. `café` -> `caf\xc3\xa9`, `日本語` -> raw
-   UTF-8. JS `JSON.stringify` already emits raw characters for printable
-   non-ASCII, so the UTF-8 encoding of the resulting string matches.
-4. **String escaping** matches JSON / JS `JSON.stringify` for the shared set:
-   `"` -> `\"`, `\` -> `\\`, U+0008 -> `\b`, U+0009 -> `\t`, U+000A -> `\n`,
-   U+000C -> `\f`, U+000D -> `\r`, and other control chars U+0000 to U+001F ->
-   `\u00xx` (lowercase hex). `/` is NOT escaped. `<`, `>`, `&` are NOT escaped.
-   U+007F (DEL) is emitted raw (not escaped) by both engines.
-5. **NFC normalization** of every string (keys and values) via
-   `unicodedata.normalize("NFC", s)`. JS reproduces with
-   `String.prototype.normalize("NFC")`.
-6. **Numbers**:
-   - Integers serialize as integers (`1`, `100000000000`).
-   - Whole-valued floats are coerced to integers before serialization
-     (`1.0` -> `1`, `2.0` -> `2`) by `_normalize_for_signing`.
-   - JS `JSON.stringify` already renders `1.0` as `1` and integer-valued
-     numbers without a decimal point, so this matches for all integers and
-     whole numbers that fit in a JS `number`.
-7. **`null`, `true`, `false`** literal as in JSON.
-8. Output is UTF-8 bytes.
+## Presentation proofs
 
-### Known canonicalization divergences (documented, guarded, NOT silently wrong)
+The signed VP excludes only top-level `proof`; its key comes from signed
+`holder`, and present method metadata must identify that holder. Every embedded
+credential is verified with the credential options. The result requires the
+holder signature and all included credential results.
 
-These differ between Python `json.dumps` and JS `JSON.stringify`. **None of
-them occur in any Attestix signed payload** (which contain only strings,
-integers, booleans, nulls, arrays, and nested objects). The JS canonicalizer
-**detects and throws** on these inputs rather than emit a byte string that
-would not match Python, so a verifier can never silently accept/reject due to a
-canonicalization mismatch:
+Challenge/domain expectations, freshness, and replay policy are application
+checks; this function does not validate them. An empty embedded-credential list
+is not independently rejected when the holder proof is valid.
 
-| Input | Python output | JS `JSON.stringify` | JS verifier behavior |
-|---|---|---|---|
-| `1e21` | `1000000000000000000000` | `1e+21` | throws `JcsUnsupportedValueError` |
-| `1e-7` | `1e-07` | `1e-7` | throws `JcsUnsupportedValueError` |
-| `-0.0` | `-0.0` | `0` | throws `JcsUnsupportedValueError` |
-| `NaN` / `Infinity` | (Python emits `NaN`/`Infinity`, invalid JSON) | `null` | throws |
-| non-integer float (e.g. `1.5`) | `1.5` | `1.5` | allowed (matches) for the common path; large/sci-notation guarded |
+## Delegation tokens
 
-The verifier accepts finite integers (including those exactly representable),
-non-integer finite floats whose JS string form has no exponent, booleans,
-strings, null, arrays, and plain objects. Numbers requiring exponential
-notation or signed-zero are rejected up front. Real Attestix VCs and JWT
-delegation payloads never trip this guard.
+A token is compact JWS `base64url(header).base64url(payload).base64url(signature)`.
+Signatures cover the literal first two segments joined by a dot, not canonical
+JSON. Only EdDSA is accepted, using the token's `iss` did:key.
 
-## 4. JSON-payload signature (used by VCs and VPs)
+A single leaf token invokes recursive `prf` verification: signature checks,
+numeric exp/nbf checks, repeated-jti detection, and child capability subset
+against each referenced parent. An array is ordered leaf..root and checks each
+listed signature/time plus consecutive capability subset; that array path does
+not independently validate prf linkage or cycles.
 
-`sign_json_payload(private_key, payload) -> str`:
+Delegation time options are Unix seconds. Numeric exp is considered expired
+when `exp + tolerance < now`; numeric nbf is not yet valid when
+`nbf - tolerance > now`. Missing or non-numeric claims do not enforce a required
+expiry. No iat, audience, or live-revocation policy is enforced. Apply required
+claims and trust policy before authorization. `decodeDelegationUnsafe` only
+decodes claims and is not a verification result.
 
-```
-proofValue = base64url( ed25519_sign( canonicalize_json(payload) ) )
-```
+## Compatibility evidence
 
-- The signature is **base64url WITH padding** (Python `base64.urlsafe_b64encode`
-  always emits `=` padding; a 64-byte signature encodes to 88 chars ending in
-  `=`). The JS decoder accepts base64url with or without padding and with `+/`
-  or `-_` alphabet, but the Python wire form is url-safe + padded.
-- Verification recomputes `canonicalize_json(payload)` and checks the signature
-  with the issuer's Ed25519 public key.
-
-## 5. Verifiable Credential (W3C VC Data Model 1.1)
-
-Issued by `CredentialService.issue_credential`. Structure:
-
-```jsonc
-{
-  "@context": [
-    "https://www.w3.org/2018/credentials/v1",
-    "https://w3id.org/security/suites/ed25519-2020/v1"
-  ],
-  "id": "urn:uuid:...",
-  "type": ["VerifiableCredential", "<SpecificType>"],
-  "issuer": { "id": "did:key:z...", "name": "..." },
-  "issuanceDate": "ISO-8601",
-  "expirationDate": "ISO-8601",
-  "credentialSubject": { "id": "<subject>", ...claims },
-  "credentialStatus": {                 // NOT signed (mutable)
-    "id": "<id>#status",
-    "type": "RevocationList2021Status",
-    "revoked": false,
-    "revocation_reason": null,
-    "revoked_at": null
-  },
-  "proof": {                            // NOT signed (mutable)
-    "type": "Ed25519Signature2020",
-    "created": "ISO-8601",
-    "verificationMethod": "did:key:z...#z...",
-    "proofPurpose": "assertionMethod",
-    "proofValue": "<base64url sig>"
-  }
-}
-```
-
-**Signed-field set (CRITICAL):** the signature covers the credential object with
-the **`proof` and `credentialStatus` fields removed**
-(`MUTABLE_FIELDS = {"proof", "credentialStatus"}`). i.e. the signed payload is:
-
-```
-{ @context, id, type, issuer, issuanceDate, expirationDate, credentialSubject }
-```
-
-canonicalized by the rules in §3. The verifier:
-
-1. Strips `proof` and `credentialStatus`.
-2. Canonicalizes the remainder.
-3. Resolves issuer DID = `proof.verificationMethod` before `#`, else `issuer.id`.
-4. Verifies `proof.proofValue` (base64url) over the canonical bytes with that
-   did:key's public key.
-
-It also checks structure (`type` contains `VerifiableCredential`), expiry
-(`expirationDate` in the future), and (if present locally) revocation. The
-offline JS verifier checks signature + structure + expiry; revocation is a
-local-storage concern and is reported as "not checkable offline".
-
-## 6. Verifiable Presentation (VP)
-
-`create_verifiable_presentation`. Signed payload = the VP with **only `proof`
-removed** (note: differs from VC, VP excludes `proof` only, not
-`credentialStatus`). Each embedded credential is verified by §5 rules. The VP
-`proof.proofPurpose` is `authentication`, and `challenge`/`domain` may be
-present both at top level and inside `proof`.
-
-## 7. UCAN-style delegation chain (JWT / EdDSA)
-
-`DelegationService.create_delegation`. **This is a JWT, not a JSON-signature
-object.** A delegation token is a compact JWS:
-
-```
-base64url(header) . base64url(payload) . base64url(signature)
-```
-
-- **Header**: `{"typ":"JWT","ucv":"0.9.0","alg":"EdDSA"}` (PyJWT serializes
-  header keys; `alg` is `EdDSA`). The exact header bytes are whatever PyJWT
-  emits; the verifier does NOT recanonicalize: it verifies over the literal
-  `base64url(header) || "." || base64url(payload)` ASCII bytes, exactly as JWS
-  requires.
-- **Payload claims**:
-  - `iss`: the **server** did:key (the signing identity for the whole chain).
-  - `aud`, `sub`: the audience agent id (recipient).
-  - `delegator`: the issuer agent id (logical granter).
-  - `iat`, `nbf`, `exp`: unix seconds (integers).
-  - `jti`: random url-safe id.
-  - `att`: list of capability strings (the UCAN attenuation set).
-  - `prf`: list of parent JWT strings (the proof chain). `[]` at the root.
-  - `attestix_version`: `"0.1.0"`, `typ`: `"ucan/delegation"`.
-- **Signature**: EdDSA (Ed25519) over the ASCII `signing input`
-  (`b64url(header).b64url(payload)`), signed by the server key. Verified with
-  the `iss` did:key's public key.
-
-### Chain verification rules (`verifyDelegationChain`)
-
-Reproduces `DelegationService.verify_delegation` recursion + the attenuation
-check enforced at creation time in `create_delegation`:
-
-1. **Each link's JWS signature** verifies against the public key derived from
-   that link's `iss` did:key.
-2. **Recursive `prf` verification**: every parent token in `prf` must itself be
-   a valid link. Invalid ancestor => whole chain invalid.
-3. **Cycle detection**: a `jti` seen twice in one verification run => reject
-   ("Cycle detected").
-4. **Capability attenuation**: a child's `att` set MUST be a subset of each of
-   its parents' `att` sets. A capability present in the child but not the
-   parent is privilege escalation => reject. (Python enforces this at creation;
-   the offline verifier re-checks it across the supplied chain because an
-   offline verifier cannot trust that creation-time checks ran.)
-5. **Linkage**: the chain is rooted at the server `iss`; each link's `prf`
-   entries are the parent tokens. The verifier walks root -> leaf.
-6. **Expiry**: `exp` must be in the future (`exp >= now`); `nbf`/`iat` sanity.
-   Expired link => reject (with `expired: true`).
-7. **Revocation** is a local-storage concern (by `jti`) and is not checkable
-   offline; reported as not-checked.
-
-The JS verifier accepts either a single leaf JWT string (it walks `prf`
-internally) or an explicit array of JWT strings root..leaf.
-
----
-
-## 8. Summary of what JS must match byte-for-byte
-
-| Concern | Rule |
-|---|---|
-| Canonical JSON | sort keys by code point, `,`/`:` separators, raw UTF-8 (no `\u` for non-ASCII), NFC, whole-float->int, lowercase `\u00xx` control escapes |
-| Signature encoding | base64url (accept padded/unpadded, both alphabets) |
-| Ed25519 | RFC 8032 verify over canonical bytes (VC/VP) or JWS signing input (delegation) |
-| did:key | base58btc multibase `z` + multicodec `0xED01` + 32-byte pubkey |
-| VC signed fields | object minus `proof` and `credentialStatus` |
-| VP signed fields | object minus `proof` |
-| Delegation | JWS EdDSA over `b64url(header).b64url(payload)`; `prf` recursion; `att` subset attenuation |
+[conformance.test.ts](tests/conformance.test.ts) exercises the vendored shared
+vectors. [security-boundaries.test.ts](tests/security-boundaries.test.ts) and
+[readiness-boundaries.test.ts](tests/readiness-boundaries.test.ts) cover issuer,
+holder, malformed metadata/expiry, NFC collisions, and unsafe numeric inputs.
+These describe tested cases and do not announce a new published package version.

@@ -5,6 +5,30 @@ All notable changes to the `attestix` npm package are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+This section records main-branch changes, not a new npm publication. Historical
+release entries below remain descriptions of those earlier releases.
+
+### Fixed
+
+- Bind credential keys to the signed issuer and presentation keys to the signed
+  holder; reject conflicting or malformed proof method metadata.
+- Fail present malformed expiry and reject NFC-key collisions, unsafe number
+  integers, and unsupported canonical numeric forms.
+- Require Node 20.19.0 or later; update Vitest to 4.1.11 and the source-map-js
+  override to >=1.2.2.
+
+### Documentation
+
+- Clarify offline revocation, presentation challenge/replay policy, the token
+  array versus recursive delegation paths, and source versus registry versions.
+- Correction to the 0.4.1 precision note: parseCanonicalJson is an internal
+  helper, not a package-root export. Source-context support is runtime dependent;
+  unavailable context rejects oversized integer tokens instead of rounding.
+- Conformance claims cover represented vectors and supported canonical values,
+  not arbitrary float interoperability across every engine.
+
 ## [0.4.1] - 2026-06-16
 
 ### Fixed
@@ -33,7 +57,7 @@ name, same version, same conformance suite, every ecosystem."
 
 ### Changed
 
-- Bumped `0.2.0` → `0.4.0` to match the Attestix 0.4.0 release across all engines.
+- Bumped `0.2.0` to `0.4.0` to match the Attestix 0.4.0 release across all engines.
 - `description` now states that the package verifies credentials and delegation
   chains issued by **Attestix 0.4.0** and conforms to the shared `spec/verify/v1`
   vectors.
