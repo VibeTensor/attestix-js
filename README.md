@@ -289,6 +289,12 @@ request timeout. The delay uses Retry-After when supplied, otherwise one second.
 Other failures use the typed
 HTTP error surface. The API itself determines authorization and availability.
 
+## Support
+
+Support ongoing project maintenance through GitHub Sponsors.
+
+<a href="https://github.com/sponsors/VibeTensor"><img src="https://img.shields.io/badge/Sponsor-GitHub%20Sponsors-ea4aaa?style=flat-square&logo=github" alt="GitHub Sponsors" /></a>
+
 ## License
 
 Apache-2.0
