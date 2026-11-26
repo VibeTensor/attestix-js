@@ -63,7 +63,7 @@
 		"node": ">=20.19.0"
 	},
 	"dependencies": {
-		"@noble/curves": "2.2.0"
+		"@noble/curves": "2.4.0"
 	},
 	"overrides": {
 		"esbuild": ">=0.28.1",
